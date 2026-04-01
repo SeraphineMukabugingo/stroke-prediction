@@ -480,7 +480,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                showError('Could not connect to prediction server. Make sure Flask backend is running on http://localhost:5000');
+                showError('Could not connect to prediction server. Please try again later or check your internet connection.');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
