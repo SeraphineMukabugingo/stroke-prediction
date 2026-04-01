@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroke Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(30, 30, 60, 0.95);
+            border: 3px solid #00d4ff;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 3px solid #00d4ff;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, select {
+            padding: 12px 15px;
+            font-size: 1em;
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            background: rgba(20, 20, 40, 0.9);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 30px;
+            border: 3px solid #00d4ff;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-title {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .prediction-box {
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .prediction-box.stroke {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            border: 3px solid #ff0000;
+        }
+
+        .prediction-box.no-stroke {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            border: 3px solid #00ff00;
+        }
+
+        .prediction-text {
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .confidence {
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .probability-bars {
+            margin-top: 20px;
+        }
+
+        .probability-item {
+            margin-bottom: 15px;
+        }
+
+        .probability-label {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #00d4ff;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .progress-fill.stroke {
+            background: linear-gradient(90deg, #ff416c 0%, #ff4b2b 100%);
+        }
+
+        .progress-fill.no-stroke {
+            background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%);
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+
+        .risk-low {
+            background: #4caf50;
+            color: white;
+        }
+
+        .risk-medium {
+            background: #ff9800;
+            color: white;
+        }
+
+        .risk-high {
+            background: #f44336;
+            color: white;
+        }
+
+        .risk-very-high {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00d4ff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stroke Prediction</h1>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" required>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" placeholder="60" required min="0" max="120">
+            </div>
+
+            <div class="form-group">
+                <label for="hypertension">Hypertension:</label>
+                <select id="hypertension" required>
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="heart_disease">Heart Disease:</label>
+                <select id="heart_disease" required>
+                    <option value="">Select</option>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="ever_married">Ever Married:</label>
+                <select id="ever_married" required>
+                    <option value="">Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="work_type">Work Type:</label>
+                <select id="work_type" required>
+                    <option value="">Select</option>
+                    <option value="Private">Private</option>
+                    <option value="Self-employed">Self-employed</option>
+                    <option value="Govt_job">Government Job</option>
+                    <option value="children">Children</option>
+                    <option value="Never_worked">Never Worked</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="Residence_type">Residence Type:</label>
+                <select id="Residence_type" required>
+                    <option value="">Select</option>
+                    <option value="Urban">Urban</option>
+                    <option value="Rural">Rural</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="avg_glucose_level">Avg Glucose Level:</label>
+                <input type="number" id="avg_glucose_level" placeholder="Average Glucose Level" required step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="bmi">BMI:</label>
+                <input type="number" id="bmi" placeholder="BMI" required step="0.1" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="smoking_status">Smoking Status:</label>
+                <select id="smoking_status" required>
+                    <option value="">Select</option>
+                    <option value="never smoked">Never Smoked</option>
+                    <option value="formerly smoked">Formerly Smoked</option>
+                    <option value="smokes">Smokes</option>
+                    <option value="Unknown">Unknown</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="predict-btn" onclick="predictStroke()">Predict Stroke</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing patient data...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result-container" id="result">
+            <h2 class="result-title">Prediction Results</h2>
+            
+            <div class="prediction-box" id="predictionBox">
+                <div class="prediction-text" id="predictionText"></div>
+                <div class="confidence" id="confidence"></div>
+                <div class="risk-badge" id="riskBadge"></div>
+            </div>
+
+            <div class="probability-bars">
+                <div class="probability-item">
+                    <div class="probability-label">
+                        <span>No Stroke Probability</span>
+                        <span id="noStrokePercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill no-stroke" id="noStrokeFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="probability-item">
+                    <div class="probability-label">
+                        <span>Stroke Probability</span>
+                        <span id="strokePercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill stroke" id="strokeFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function predictStroke() {
+            // Get form values
+            const data = {
+                gender: document.getElementById('gender').value,
+                age: parseFloat(document.getElementById('age').value),
+                hypertension: parseInt(document.getElementById('hypertension').value),
+                heart_disease: parseInt(document.getElementById('heart_disease').value),
+                ever_married: document.getElementById('ever_married').value,
+                work_type: document.getElementById('work_type').value,
+                Residence_type: document.getElementById('Residence_type').value,
+                avg_glucose_level: parseFloat(document.getElementById('avg_glucose_level').value),
+                bmi: parseFloat(document.getElementById('bmi').value),
+                smoking_status: document.getElementById('smoking_status').value
+            };
+
+            // Validate
+            if (!data.gender || !data.age || isNaN(data.hypertension) || isNaN(data.heart_disease) || 
+                !data.ever_married || !data.work_type || !data.Residence_type || 
+                !data.avg_glucose_level || !data.bmi || !data.smoking_status) {
+                showError('Please fill in all fields!');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+
+            try {
+                const response = await fetch('http://localhost:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Prediction failed');
+                }
+
+                const result = await response.json();
+                displayResult(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Could not connect to prediction server. Make sure Flask backend is running on http://localhost:5000');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+
+        function displayResult(result) {
+            const resultDiv = document.getElementById('result');
+            const predictionBox = document.getElementById('predictionBox');
+            const predictionText = document.getElementById('predictionText');
+            const confidence = document.getElementById('confidence');
+            const riskBadge = document.getElementById('riskBadge');
+
+            // Set prediction
+            if (result.prediction === 1) {
+                predictionBox.className = 'prediction-box stroke';
+                predictionText.textContent = ' STROKE RISK DETECTED';
+            } else {
+                predictionBox.className = 'prediction-box no-stroke';
+                predictionText.textContent = ' NO STROKE RISK';
+            }
+
+            confidence.textContent = `Confidence: ${result.confidence.toFixed(1)}%`;
+
+            // Set risk level
+            const riskLevel = result.risk_level;
+            riskBadge.textContent = `Risk Level: ${riskLevel}`;
+            riskBadge.className = 'risk-badge risk-' + riskLevel.toLowerCase().replace(' ', '-');
+
+            // Set probabilities
+            const noStrokeProb = result.probability.no_stroke * 100;
+            const strokeProb = result.probability.stroke * 100;
+
+            document.getElementById('noStrokePercent').textContent = noStrokeProb.toFixed(1) + '%';
+            document.getElementById('strokePercent').textContent = strokeProb.toFixed(1) + '%';
+
+            document.getElementById('noStrokeFill').style.width = noStrokeProb + '%';
+            document.getElementById('strokeFill').style.width = strokeProb + '%';
+
+            // Show result
+            resultDiv.classList.add('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = ' ' + message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
