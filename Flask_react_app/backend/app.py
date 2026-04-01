@@ -1219,9 +1219,7 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print(" ENHANCED STROKE PREDICTION APP IS RUNNING!")
     print("="*60)
-    print(" Backend: http://127.0.0.1:5000")
-    print(" Dashboard: http://127.0.0.1:5000/dashboard")
-    print(" Database: stroke_predictions.db")
+    print(" Backend will start on Render or local machine")
     print("="*60)
     print("\n Available Endpoints:")
     print("  GET    /dashboard           - Enhanced dashboard")
@@ -1232,4 +1230,7 @@ if __name__ == '__main__':
     print("  GET    /stats               - View statistics")
     print("  DELETE /prediction/<id>     - Delete prediction")
     print("="*60 + "\n")
-    app.run(debug=True, port=5000, host='127.0.0.1')
+
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
