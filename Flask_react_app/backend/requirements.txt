@@ -2,11 +2,8 @@ flask
 flask-cors
 pandas
 numpy
-scikit-learn
+scikit-learn==1.7.2
 imbalanced-learn
 joblib
 plotly
 gunicorn
-
-
-
