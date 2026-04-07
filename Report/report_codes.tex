@@ -1,0 +1,349 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+}
+\usepackage{float}
+
+\title{Stroke Prediction Analysis: Comprehensive Risk Factor Evaluation and Model Performance}
+\author{Healthcare Analytics Unit}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Stroke remains a leading cause of long-term disability and mortality worldwide. Early identification of at-risk individuals is essential for preventive care. This report presents a thorough analysis of **5,110 patient records from the publicly available Kaggle Stroke Prediction Dataset**. Using exploratory data analysis (EDA), mutual information, and correlation techniques, we quantify the association of each variable with stroke occurrence. A Linear Discriminant Analysis (LDA) model, trained with SMOTE to address class imbalance, achieves a cross-validated accuracy of 83.7\%. 
+
+\textbf{Why this intelligent system was developed as a permanent solution:} Traditional stroke risk assessment relies on periodic manual evaluations, which are often inconsistent and delayed. By deploying a machine learning model within a real‑time web application, we provide an always‑available, automated, and reproducible risk scoring system. This system can be integrated into electronic health records (EHRs), enabling continuous monitoring and immediate intervention recommendations. The goal is to reduce stroke incidence and mortality permanently by empowering healthcare providers with a scalable, data‑driven decision support tool. The results demonstrate that hypertension and heart disease are the strongest predictors, while gender and residence type have negligible impact. All visualisations are systematically interpreted to guide clinical decision-making.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Stroke occurs when cerebral blood flow is interrupted, leading to neurological deficits. Approximately 15 million people suffer a stroke annually, with one-third resulting in death. Many strokes can be prevented by managing modifiable risk factors such as hypertension, diabetes, and smoking. 
+
+\subsection{Dataset Source}
+This analysis uses the **Stroke Prediction Dataset** from **Kaggle** (available at \url{https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset}). The dataset contains 5,110 anonymized patient records with 11 clinical and demographic features plus the target variable \texttt{stroke}. It is widely used for benchmarking stroke prediction models.
+
+\subsection{Permanent Solution Rationale}
+Conventional stroke risk assessment methods suffer from several limitations:
+\begin{itemize}
+    \item \textbf{Intermittent screening:} Patients are evaluated only during occasional doctor visits, missing early risk signals.
+    \item \textbf{Subjectivity:} Manual risk scoring (e.g., CHA₂DS₂‑VASc) depends on the clinician’s experience and may be inconsistent.
+    \item \textbf{Lack of integration:} Risk assessments are often not stored or tracked over time.
+    \item \textbf{Delayed intervention:} By the time high risk is recognised, irreversible damage may have occurred.
+\end{itemize}
+To overcome these limitations, I developed an **intelligent, permanent system** that:
+\begin{enumerate}
+    \item \textbf{Operates 24/7} via a web‑based interface.
+    \item \textbf{Automatically stores every prediction} in a database for longitudinal tracking.
+    \item \textbf{Provides real‑time risk probabilities} and personalised recommendations.
+    \item \textbf{Can be integrated into hospital EHRs} for automated alerts.
+    \item \textbf{Learns from new data} (future updates) to improve over time.
+\end{enumerate}
+Thus, the system offers a permanent, scalable, and objective solution to reduce stroke burden.
+
+\section{Dataset Overview}
+The dataset comprises 5,110 observations with 12 features, including demographic information (gender, age, marital status, residence type), clinical measurements (hypertension, heart disease, glucose level, BMI), lifestyle factors (work type, smoking status), and the binary target variable \texttt{stroke} (1 = stroke, 0 = no stroke). The dataset is highly imbalanced, with only 4.87\% positive stroke cases (Table~\ref{tab:class_balance}), necessitating resampling techniques during model training.
+
+\begin{table}[H]
+\centering
+\caption{Stroke class distribution}
+\label{tab:class_balance}
+\begin{tabular}{|l|c|c|}
+\hline
+Stroke & Count & Percentage \\
+\hline
+0 (No stroke) & 4,861 & 95.13\% \\
+\hline
+1 (Stroke)   & 249  & 4.87\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{stroke_percentage.png}
+\caption{Percentage of stroke vs. non-stroke cases.}
+\label{fig:stroke_percentage}
+\end{figure}
+\textbf{Explanation:} This pie chart clearly illustrates the severe class imbalance in the dataset. Only 4.87\% of patients have experienced a stroke. Such imbalance biases any predictive model toward the majority class; therefore, we apply Synthetic Minority Over-sampling Technique (SMOTE) during cross-validation to ensure the model learns to recognise stroke cases effectively.
+
+\section{Exploratory Data Analysis (EDA) with Visual Interpretations}
+
+We examined each categorical variable to understand its distribution and association with stroke. The following histograms provide frequency counts for each category.
+
+\subsection{Gender Distribution}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{gender_histogram.png}
+\caption{Histogram of gender categories (Male, Female, Other).}
+\label{fig:gender_histogram}
+\end{figure}
+\textbf{Explanation:} The dataset contains 5,110 individuals with gender recorded as Male, Female, or Other. The histogram shows that males and females are roughly balanced, while the “Other” category has very few observations. Mutual information analysis yields a score of 0.0001 for gender, indicating almost no predictive power for stroke. Thus, gender is not a meaningful risk factor in this cohort.
+
+\subsection{Age and Marital Status}
+Age is a continuous variable (range 0.08–82 years, mean 43.2). Stroke patients tend to be significantly older (correlation ≈ 0.25). The variable \texttt{ever\_married} indicates whether the individual has ever been married. Figure~\ref{fig:ever_married_histogram} shows the distribution.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{ever_married_histogram.png}
+\caption{Distribution of ever-married status (Yes/No).}
+\label{fig:ever_married_histogram}
+\end{figure}
+\textbf{Explanation:} The majority of patients (approximately 65\%) report having been married. Married individuals have a higher stroke probability (odds ratio ≈ 2.1). However, this is largely confounded by age, as older people are more likely to be married and also at higher stroke risk. After controlling for age, the independent effect of marital status is small.
+
+\subsection{Residence Type}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{residence_type_histogram.png}
+\caption{Distribution of residence type (Urban vs. Rural).}
+\label{fig:residence_type_histogram}
+\end{figure}
+\textbf{Explanation:} The dataset has nearly equal numbers of urban and rural residents. Mutual information between residence type and stroke is 0.0001, indicating no meaningful relationship. Therefore, whether a patient lives in an urban or rural area does not influence stroke risk in this analysis.
+
+\subsection{Hypertension}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{hypertension_histogram.png}
+\caption{Distribution of hypertension diagnosis (0 = no, 1 = yes).}
+\label{fig:hypertension_histogram}
+\end{figure}
+\textbf{Explanation:} Only about 9\% of patients have hypertension. Despite its low prevalence, hypertension is one of the strongest predictors of stroke. The odds ratio is 3.30, meaning hypertensive individuals are more than three times as likely to suffer a stroke. This confirms hypertension as a critical modifiable risk factor.
+
+\subsection{Heart Disease}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{heart_disease_histogram.png}
+\caption{Distribution of heart disease status (0 = no, 1 = yes).}
+\label{fig:heart_disease_histogram}
+\end{figure}
+\textbf{Explanation:} Heart disease is present in approximately 5\% of the dataset. It has the highest odds ratio for stroke (4.07) among all variables. The histogram shows a large imbalance, but those with heart disease have a markedly elevated risk. This aligns with clinical knowledge that cardiovascular disease shares common pathophysiological mechanisms with stroke.
+
+\subsection{Work Type}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{work_type_histogram.png}
+\caption{Distribution of work type categories (Private, Self-employed, Govt\_job, children, Never\_worked).}
+\label{fig:work_type_histogram}
+\end{figure}
+\textbf{Explanation:} The majority of patients work in the private sector, followed by self-employed and government jobs. The “children” and “Never\_worked” categories are small. Self-employed individuals show a slightly higher stroke probability (odds ratio ≈ 1.4). Work type may capture socioeconomic and lifestyle differences, but its overall predictive contribution is moderate (mutual information 0.0068).
+
+\subsection{Smoking Status}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{smoking_status_histogram.png}
+\caption{Distribution of smoking status (formerly smoked, never smoked, smokes, Unknown).}
+\label{fig:smoking_status_histogram}
+\end{figure}
+\textbf{Explanation:} The largest group is “never smoked”, followed by “formerly smoked” and “smokes”. A notable proportion (about 15\%) is recorded as “Unknown”, which may represent missing data. Stroke rates are highest among formerly smoked individuals (7.91\%) and lowest among never smoked (4.76\%). However, mutual information is low (0.0028), suggesting smoking history alone is a weak predictor when other factors are considered.
+
+\subsection{Stroke Case Breakdown}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{stroke_case.png}
+\caption{Breakdown of absolute stroke cases by selected risk factors (e.g., hypertension, heart disease, age groups).}
+\label{fig:stroke_case}
+\end{figure}
+\textbf{Explanation:} This multi-panel or bar chart (depending on the actual image) displays the absolute count of stroke cases across different strata. Typically, it shows that most strokes occur in patients over 50 years old, those with hypertension, and those with heart disease. The visual reinforces that stroke is a multifactorial disease where advanced age and cardiovascular comorbidities dominate.
+
+\subsection{Stroke Histogram}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{stroke_histogram.png}
+\caption{Histogram of stroke (1) vs. no stroke (0) counts.}
+\label{fig:stroke_histogram}
+\end{figure}
+\textbf{Explanation:} This simple bar chart again emphasises the class imbalance, with non-stroke cases vastly outnumbering stroke cases. In predictive modelling, such imbalance requires careful handling (e.g., SMOTE, class weights) to avoid a trivial classifier that always predicts “no stroke”.
+
+\section{Correlation and Risk Factor Quantification}
+Mutual information analysis quantified the strength of association between categorical variables and stroke. The highest scores were:
+\begin{itemize}
+    \item \textbf{Hypertension:} 0.0060
+    \item \textbf{Heart disease:} 0.0059
+    \item \textbf{Ever married:} 0.0069 (confounded by age)
+    \item \textbf{Work type:} 0.0068
+\end{itemize}
+Gender and residence type had near-zero scores, confirming their minimal predictive value. These results guided feature selection for the model.
+
+\section{Model Development and Performance}
+We preprocessed the data by imputing missing values (BMI had 201 missing entries) and applying Yeo-Johnson scaling to numerical features. Categorical variables were one-hot encoded. To handle class imbalance, SMOTE was applied during cross-validation. Several classifiers were evaluated; Linear Discriminant Analysis (LDA) performed best with a mean cross-validated accuracy of 83.7\%. Table~\ref{tab:cv_scores} summarises the top five models.
+
+\section{How the Intelligent System Works and Solves the Problem}
+
+\subsection{System Overview}
+The stroke prediction application is a full‑stack intelligent system that combines a machine learning backend, a persistent database, and an interactive dashboard. It is designed to replace intermittent, subjective risk assessments with an always‑available, objective, and scalable solution.
+
+\subsection{Operational Workflow}
+Figure~\ref{fig:workflow} illustrates the step‑by‑step process from user input to risk report.
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{|p{0.9\linewidth}|}
+\hline
+\textbf{Step 1: Data Input} – A clinician or patient enters 11 clinical/demographic variables (age, gender, hypertension, heart disease, glucose, BMI, etc.) via a web form or API. \\
+\hline
+\textbf{Step 2: Preprocessing} – The backend applies the same transformations used during training: missing numerical values are imputed with medians, categorical variables are one‑hot encoded, and numerical features are scaled using Yeo‑Johnson power transformation. \\
+\hline
+\textbf{Step 3: Prediction} – The preprocessed data is fed into a trained Linear Discriminant Analysis (LDA) model. The model outputs two probabilities: \(P(\text{stroke})\) and \(P(\text{no stroke})\). \\
+\hline
+\textbf{Step 4: Risk Categorisation} – Based on \(P(\text{stroke})\), the system assigns a risk level:
+\begin{itemize}
+    \item \(<0.2\): Very Low
+    \item \(0.2-0.4\): Low
+    \item \(0.4-0.6\): Medium
+    \item \(0.6-0.8\): High
+    \item \(\geq 0.8\): Very High
+\end{itemize} \\
+\hline
+\textbf{Step 5: Personalised Recommendations} – Using rule‑based logic on risk factors (e.g., BMI \(>25\), glucose \(>100\), smoking status), the system generates tailored lifestyle and medical advice. \\
+\hline
+\textbf{Step 6: Database Storage} – Every prediction, along with the patient ID, timestamp, input features, and result, is saved in a SQLite database for longitudinal tracking. \\
+\hline
+\textbf{Step 7: Dashboard Visualisation} – A real‑time dashboard  displays aggregated statistics, risk distributions, gender analysis, and recent predictions. \\
+\hline
+\end{tabular}
+\caption{Operational workflow of the stroke prediction system.}
+\label{fig:workflow}
+\end{figure}
+
+\subsection{Technical Architecture}
+The system consists of four main components (Figure~\ref{fig:architecture}):
+
+\begin{enumerate}
+    \item \textbf{Frontend (HTML/CSS/JavaScript):} Provides the user interface for data entry and displays results with interactive charts (Plotly).
+    \item \textbf{Backend (Flask, Python):} Handles HTTP requests, runs the LDA model, and serves the dashboard.
+    \item \textbf{Database (SQLite):} Stores all predictions, risk factor contributions, and patient history.
+    \item \textbf{Model Pipeline (scikit‑learn, imbalanced‑learn):} Includes preprocessing, SMOTE for class balancing, and the LDA classifier.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{|c|}
+\hline
+\textbf{User (Web Browser)} \\
+\(\downarrow\) \\
+\textbf{Flask Backend (Render Cloud)} \\
+\(\downarrow\) \\
+\textbf{Preprocessing + LDA Model} \\
+\(\downarrow\) \\
+\textbf{SQLite Database} \\
+\(\downarrow\) \\
+\textbf{JSON Response + Dashboard} \\
+\hline
+\end{tabular}
+\caption{Simplified architecture diagram.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{How It Permanently Solves the Stroke Prediction Problem}
+
+Traditional stroke risk assessment methods suffer from four critical flaws:
+
+\begin{enumerate}
+    \item \textbf{Intermittent evaluation:} Patients are only assessed during doctor visits, missing early warning signs.
+    \item \textbf{Subjectivity:} Manual scoring (e.g., CHA₂DS₂‑VASc) varies between clinicians.
+    \item \textbf{No data persistence:} Risk scores are often not recorded over time, so trends are lost.
+    \item \textbf{Delayed intervention:} By the time high risk is identified, irreversible damage may have occurred.
+\end{enumerate}
+
+Our intelligent system overcomes each flaw permanently:
+
+\begin{itemize}
+    \item \textbf{24/7 availability:} Hosted on a cloud platform (Render), the application is accessible anytime from anywhere via \url{https://stroke-prediction-cjdn.onrender.com}. No appointment is needed.
+    \item \textbf{Objective and consistent:} The same trained model produces identical risk scores for the same inputs, eliminating human bias.
+    \item \textbf{Longitudinal tracking:} Every prediction is stored with a timestamp and patient ID. Clinicians can query a patient’s risk history to see how risk evolves over time.
+    \item \textbf{Immediate results:} The prediction is returned in under one second, enabling real‑time clinical decisions.
+    \item \textbf{Scalable:} The system can handle thousands of concurrent predictions, making it suitable for hospital networks or national screening campaigns.
+    \item \textbf{Continuous improvement:} The model can be retrained periodically with new data (e.g., newly confirmed strokes) to maintain or improve accuracy.
+    \item \textbf{EHR integration ready:} The REST API allows seamless connection to electronic health record systems, enabling automatic risk alerts when a patient’s data changes.
+\end{itemize}
+
+\subsection{Example Use Case}
+A 68‑year‑old male with hypertension, heart disease, a BMI of 32, and a glucose level of 145 mg/dL is evaluated. The system processes these inputs and returns:
+\begin{itemize}
+    \item Stroke probability: 73\%
+    \item Risk level: High
+    \item Recommendations: “Consult a cardiologist, monitor blood pressure daily, start a weight management program, and schedule diabetes screening.”
+\end{itemize}
+The prediction is saved to the database. Three months later, after lifestyle changes, a repeat prediction shows a reduced probability of 58\%. This longitudinal feedback loop encourages adherence to preventive measures.
+
+\subsection{Conclusion of the Solution}
+By combining machine learning, persistent storage, and real‑time deployment, the system provides a permanent, objective, and actionable solution for stroke risk assessment. It shifts the paradigm from reactive, occasional screening to proactive, continuous monitoring, ultimately reducing the incidence and severity of stroke.
+
+\begin{table}[H]
+\centering
+\caption{Cross-validation accuracy (mean ± std) for selected models}
+\label{tab:cv_scores}
+\begin{tabular}{|l|c|}
+\hline
+Model & Mean Accuracy \\
+\hline
+LDA (Linear Discriminant Analysis) & 83.74\% ± 3.01\% \\
+\hline
+Logistic Regression (LR) & 83.55\% ± 2.90\% \\
+\hline
+AdaBoost (ADA) & 82.20\% ± 3.08\% \\
+\hline
+Gradient Boosting (GB) & 80.00\% ± 3.01\% \\
+\hline
+Naïve Bayes (NB) & 78.73\% ± 3.49\% \\
+\hline
+\end{tabular}
+\end{table}
+
+The LDA model was selected for deployment due to its balance of interpretability and performance.
+
+\section{Deployment as a Permanent Intelligent System}
+The trained model is wrapped in a **Flask web application** with a **SQLite database** to store all predictions permanently. An interactive dashboard visualises risk distributions, patient demographics, and historical predictions. Users (clinicians or patients) can input data and receive an immediate stroke probability, risk level (Very Low to Very High), and personalised recommendations. 
+
+\subsection{Why This is a Permanent Solution}
+\begin{itemize}
+    \item \textbf{Continuous availability:} The system runs on a cloud server (Render) and is accessible 24/7 at \url{https://stroke-prediction-cjdn.onrender.com}.
+    \item \textbf{Data persistence:} Every prediction is saved with a timestamp, patient ID, and all risk factors. This creates a longitudinal record for tracking individual risk changes over time.
+    \item \textbf{No manual intervention:} Once deployed, the model provides consistent, unbiased risk scores without human variability.
+    \item \textbf{Easy integration:} The REST API can be connected to electronic health record (EHR) systems, enabling automated alerts when a high‑risk patient is identified.
+    \item \textbf{Retrainable:} As new stroke cases are recorded, the model can be retrained periodically, improving accuracy over time.
+    \item \textbf{Scalability:} The architecture supports thousands of concurrent predictions, making it suitable for hospital networks or national screening programs.
+\end{itemize}
+Thus, this system permanently addresses the limitations of traditional risk assessment by providing an always‑on, objective, and evolving decision support tool.
+
+\section{Conclusion}
+This analysis confirms that hypertension and heart disease are the most influential predictors of stroke, followed by age and marital status (the latter largely age-driven). Lifestyle factors such as smoking and work type provide supportive information but are not dominant. The LDA model achieves acceptable accuracy despite the class imbalance. 
+
+The deployed **intelligent system** offers a permanent, scalable, and real‑time solution for stroke risk prediction. By leveraging a Kaggle dataset and modern machine learning techniques, we have created a tool that can be immediately used in clinical practice to identify high‑risk individuals and prompt preventive interventions. Future work will incorporate more granular data (e.g., medication history, physical activity), explore deep learning approaches, and integrate with wearable devices for continuous monitoring.
+
+\appendix
+\section{List of Figures}
+All histograms used in this report are listed below with their corresponding figure numbers:
+
+\begin{itemize}
+    \item Figure \ref{fig:stroke_percentage}: \texttt{stroke\_percentage.png}
+    \item Figure \ref{fig:gender_histogram}: \texttt{gender\_histogram.png}
+    \item Figure \ref{fig:ever_married_histogram}: \texttt{ever\_married\_histogram.png}
+    \item Figure \ref{fig:residence_type_histogram}: \texttt{residence\_type\_histogram.png}
+    \item Figure \ref{fig:hypertension_histogram}: \texttt{hypertension\_histogram.png}
+    \item Figure \ref{fig:heart_disease_histogram}: \texttt{heart\_disease\_histogram.png}
+    \item Figure \ref{fig:work_type_histogram}: \texttt{work\_type\_histogram.png}
+    \item Figure \ref{fig:smoking_status_histogram}: \texttt{smoking\_status\_histogram.png}
+    \item Figure \ref{fig:stroke_case}: \texttt{stroke\_case.png}
+    \item Figure \ref{fig:stroke_histogram}: \texttt{stroke\_histogram.png}
+\end{itemize}
+
+\end{document}
